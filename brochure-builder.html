@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TripDekhoo — Brochure Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+:root {
+  --brand:#5850FE; --brand-dark:#3d36d4; --brand-light:#ede9ff;
+  --yellow:#FFC800; --red:#FF214B; --ink:#16131f; --ink2:#3d3a52;
+  --muted:#8b879e; --sand:#f4f2fc; --rule:#e4e1f5; --green:#12b76a;
+  --sidebar-bg:#100e1a; --sidebar-border:rgba(255,255,255,0.07);
+  --ba:#5850FE; --ba-dark:#3d36d4; --ba-light:#ede9ff; --ba-rgb:88,80,254;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{font-family:'DM Sans',sans-serif;background:#d8d4f0;color:var(--ink);min-height:100vh;font-size:14px;}
+.shell{display:grid;grid-template-columns:410px 1fr;min-height:100vh;}
+
+/* SIDEBAR */
+.sidebar{background:var(--sidebar-bg);color:#fff;position:sticky;top:0;height:100vh;overflow:hidden;display:flex;flex-direction:column;}
+.sb-brand{padding:18px 24px 15px;border-bottom:1px solid var(--sidebar-border);display:flex;align-items:center;gap:12px;flex-shrink:0;}
+.sb-mark{width:36px;height:36px;background:linear-gradient(135deg,var(--brand),var(--brand-dark));border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.sb-mark svg{width:19px;height:19px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.sb-title{font-family:'Playfair Display',serif;font-size:17px;font-weight:700;color:#fff;}
+.sb-sub{font-size:9px;font-weight:500;color:rgba(255,255,255,0.28);letter-spacing:.14em;text-transform:uppercase;margin-top:2px;}
+.sb-nav{flex-shrink:0;border-bottom:1px solid var(--sidebar-border);display:grid;grid-template-columns:1fr 1fr;}
+.ni{display:flex;align-items:center;gap:8px;padding:7px 16px;font-size:10.5px;font-weight:500;color:rgba(255,255,255,0.3);cursor:pointer;transition:all .14s;border-left:2px solid transparent;border-bottom:1px solid var(--sidebar-border);}
+.ni:hover{color:rgba(255,255,255,0.65);}
+.ni.active{color:var(--yellow);border-left-color:var(--brand);background:rgba(88,80,254,0.1);}
+.ni svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;flex-shrink:0;}
+.sb-body{flex:1;overflow-y:auto;padding:16px 22px 20px;}
+.sb-body::-webkit-scrollbar{width:3px;}
+.sb-body::-webkit-scrollbar-thumb{background:var(--brand);border-radius:2px;}
+.fs{display:none;animation:fi .18s ease;}
+.fs.active{display:block;}
+@keyframes fi{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.sec-ttl{font-family:'Playfair Display',serif;font-size:16px;font-weight:600;color:#fff;margin-bottom:13px;padding-bottom:9px;border-bottom:1px solid var(--sidebar-border);}
+.fg{margin-bottom:9px;}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+label{display:block;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,0.26);margin-bottom:3px;}
+input,textarea,select{width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:7px 9px;font-family:'DM Sans',sans-serif;font-size:12.5px;color:#fff;outline:none;transition:border-color .14s;line-height:1.4;}
+input::placeholder,textarea::placeholder{color:rgba(255,255,255,0.16);}
+input:focus,textarea:focus,select:focus{border-color:var(--brand);}
+select option{background:#1a1528;}
+textarea{resize:vertical;min-height:58px;line-height:1.5;}
+input[type=number]{-moz-appearance:textfield;}
+.sl{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--yellow);margin:10px 0 6px;}
+.ic{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:7px;padding:10px;margin-bottom:7px;}
+.ic-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.ic-lbl{font-size:9px;font-weight:700;color:var(--yellow);letter-spacing:.08em;text-transform:uppercase;}
+.rm{background:none;border:none;color:rgba(255,255,255,0.18);cursor:pointer;font-size:13px;padding:1px 3px;transition:color .13s;}
+.rm:hover{color:var(--red);}
+.add-btn{width:100%;background:transparent;border:1px dashed rgba(255,255,255,0.13);border-radius:6px;padding:7px;color:rgba(255,255,255,0.3);font-family:'DM Sans',sans-serif;font-size:11px;cursor:pointer;transition:all .14s;margin-top:4px;}
+.add-btn:hover{border-color:var(--brand);color:rgba(255,255,255,0.65);}
+/* image slots */
+.isl{background:rgba(255,255,255,0.04);border:1px dashed rgba(255,255,255,0.11);border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;position:relative;transition:border-color .14s;}
+.isl-w{width:100%;height:85px;margin-top:6px;}
+.isl-s{height:68px;}
+.isl-g{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px;}
+.isl:hover{border-color:var(--brand);}
+.isl img.pi{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+.isl input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.isl-lbl{font-size:9.5px;color:rgba(255,255,255,0.23);text-align:center;padding:5px;z-index:1;pointer-events:none;line-height:1.5;}
+.irm{position:absolute;top:3px;right:3px;background:rgba(0,0,0,0.62);border:none;border-radius:3px;color:#fff;font-size:9px;cursor:pointer;padding:2px 5px;z-index:2;display:none;}
+.isl:hover .irm{display:block;}
+/* emoji */
+.ei-row{display:flex;gap:5px;align-items:center;}
+.ei-row input.ei{width:50px;text-align:center;font-size:15px;padding:5px 3px;flex-shrink:0;}
+.ep-tog{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.09);border-radius:5px;padding:5px 7px;font-size:13px;cursor:pointer;flex-shrink:0;}
+.ep-tog:hover{background:rgba(88,80,254,0.24);}
+.epicker{display:none;flex-wrap:wrap;gap:3px;margin-top:6px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:5px;padding:6px;max-height:90px;overflow-y:auto;}
+.epicker.open{display:flex;}
+.eb{background:none;border:1px solid rgba(255,255,255,0.07);border-radius:4px;padding:3px 4px;font-size:13px;cursor:pointer;line-height:1;}
+.eb:hover{background:rgba(88,80,254,0.28);border-color:var(--brand);}
+/* color chips */
+.cc-grid{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px;}
+.cc{width:25px;height:25px;border-radius:50%;cursor:pointer;border:2.5px solid transparent;transition:all .13s;}
+.cc:hover,.cc.active{border-color:#fff;transform:scale(1.2);}
+/* sidebar actions */
+.sb-acts{padding:13px 22px;border-top:1px solid var(--sidebar-border);display:flex;flex-direction:column;gap:6px;flex-shrink:0;}
+.btn-p{background:var(--brand);color:#fff;border:none;border-radius:7px;padding:11px 14px;font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:600;cursor:pointer;transition:all .14s;display:flex;align-items:center;justify-content:center;gap:6px;width:100%;}
+.btn-p:hover{background:var(--brand-dark);transform:translateY(-1px);box-shadow:0 4px 14px rgba(88,80,254,0.32);}
+.btn-p:disabled{opacity:.55;transform:none;cursor:wait;}
+.btn-s{background:transparent;color:rgba(255,255,255,0.38);border:1px solid rgba(255,255,255,0.1);border-radius:7px;padding:9px 14px;font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;transition:all .14s;width:100%;}
+.btn-s:hover{border-color:rgba(255,255,255,0.26);color:#fff;}
+
+/* PREVIEW */
+.preview-area{background:#ccc8e8;padding:26px 20px;overflow-y:auto;display:flex;flex-direction:column;align-items:center;}
+.pt{display:flex;justify-content:space-between;align-items:center;width:100%;max-width:1140px;margin-bottom:14px;flex-shrink:0;}
+.pt-lbl{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#3a3078;}
+.pg-badge{font-size:10px;font-weight:700;color:#5248b4;background:rgba(88,80,254,0.1);border:1px solid rgba(88,80,254,0.22);border-radius:20px;padding:2px 10px;margin-left:9px;}
+.pt-r{display:flex;align-items:center;gap:7px;}
+.zg{display:flex;gap:3px;}
+.zb{background:rgba(255,255,255,0.34);border:none;border-radius:4px;padding:4px 9px;font-family:'DM Sans',sans-serif;font-size:10.5px;font-weight:600;cursor:pointer;color:#302870;transition:all .12s;}
+.zb:hover,.zb.active{background:rgba(255,255,255,0.6);}
+.dl2{display:flex;align-items:center;gap:5px;background:var(--brand);color:#fff;border:none;border-radius:6px;padding:8px 15px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .14s;}
+.dl2:hover{background:var(--brand-dark);}
+.dl2:disabled{opacity:.55;cursor:wait;}
+
+/* PAGES */
+#pages-scale{transform-origin:top center;}
+#pages-wrap{display:flex;flex-direction:column;gap:16px;}
+
+/* A4 LANDSCAPE 1122x794 */
+.bpage{width:1122px;height:794px;background:#fff;box-shadow:0 6px 38px rgba(0,0,0,0.2);display:grid;flex-shrink:0;overflow:hidden;}
+.bpage.p1{grid-template-columns:326px 1fr 1fr;}
+.bpage.px{grid-template-columns:52px 1fr 1fr;}
+
+/* COVER */
+.bp-l{position:relative;display:flex;flex-direction:column;overflow:hidden;background:#0d0b18;}
+.cv-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;}
+.cv-ov{position:absolute;inset:0;z-index:1;background:linear-gradient(175deg,rgba(0,0,0,0.06) 0%,rgba(0,0,0,0.48) 48%,rgba(0,0,0,0.9) 100%);}
+.cv-body{position:relative;z-index:2;display:flex;flex-direction:column;height:100%;padding:20px 18px;}
+.cv-top{margin-bottom:auto;}
+.cv-logo-row{display:flex;align-items:center;gap:8px;}
+.cv-logo{height:26px;width:auto;object-fit:contain;}
+.cv-brand{font-family:'Playfair Display',serif;font-size:13px;font-weight:700;color:#fff;line-height:1.1;}
+.cv-brand-sub{font-size:7.5px;color:rgba(255,255,255,0.33);letter-spacing:.1em;text-transform:uppercase;margin-top:1px;}
+.cv-bottom{margin-top:auto;}
+.cv-badge{display:inline-block;background:var(--ba);color:#fff;font-size:6.5px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;padding:2px 10px;border-radius:20px;margin-bottom:8px;}
+.cv-dur{font-size:8px;font-weight:600;color:rgba(255,255,255,0.52);letter-spacing:.14em;text-transform:uppercase;margin-bottom:4px;}
+.cv-dest{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;line-height:1.15;color:#fff;margin-bottom:6px;}
+.cv-tagline{font-size:9.5px;color:rgba(255,255,255,0.6);font-style:italic;line-height:1.55;margin-bottom:9px;}
+.cv-chips{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:10px;}
+.cv-chip{background:rgba(255,255,255,0.09);border:1px solid rgba(255,255,255,0.15);border-radius:20px;font-size:7px;padding:2px 8px;color:rgba(255,255,255,0.78);}
+.cv-div{height:1px;background:rgba(255,255,255,0.12);margin:7px 0;}
+.cv-agency{font-size:11px;font-weight:700;color:var(--yellow);}
+.cv-agency-sub{font-size:7px;color:rgba(255,255,255,0.32);margin-top:1px;}
+
+/* EXTRA PAGE STRIP */
+.bp-strip{background:var(--ba);display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:12px 0;overflow:hidden;}
+.strip-txt{writing-mode:vertical-rl;text-orientation:mixed;transform:rotate(180deg);font-family:'Playfair Display',serif;font-size:10px;font-weight:700;color:rgba(255,255,255,0.7);letter-spacing:.07em;white-space:nowrap;}
+.strip-pg{font-size:8px;font-weight:700;color:rgba(255,255,255,0.46);}
+
+/* CONTENT COLUMNS */
+.bp-col{display:flex;flex-direction:column;border-right:1px solid #ece8f6;background:#fffef9;overflow:hidden;}
+.bp-col:last-child{border-right:none;}
+.cb{padding:10px 13px;border-bottom:1px solid #f0ecf6;flex-shrink:0;}
+.cb.grow{flex:1;overflow:hidden;}
+.cb:last-child{border-bottom:none;}
+.cb-hd{display:flex;align-items:center;gap:5px;margin-bottom:7px;}
+.cb-ico{width:17px;height:17px;background:var(--ba);border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.cb-ico svg{width:8px;height:8px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.cb-ttl{font-family:'Playfair Display',serif;font-size:11.5px;font-weight:600;color:var(--ink);}
+.cb-line{flex:1;height:1px;background:var(--rule);}
+
+/* highlights */
+.hl-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px;}
+.hl-item{display:flex;align-items:center;gap:4px;padding:3px 7px;background:var(--ba-light);border-radius:4px;}
+.hl-ico{font-size:11px;line-height:1;flex-shrink:0;}
+.hl-txt{font-size:8px;color:var(--ink);font-weight:500;line-height:1.3;}
+
+/* itinerary */
+.itin-day{display:grid;grid-template-columns:48px 1fr;margin-bottom:2px;}
+.itin-n{background:var(--ba);padding:0 4px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:38px;}
+.itin-nb{font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:#fff;line-height:1;}
+.itin-ns{font-size:6px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,0.52);}
+.itin-c{border:1px solid var(--rule);border-left:none;padding:6px 9px;}
+.itin-tb{background:var(--ba-light);border-radius:3px;padding:2px 7px;margin-bottom:2px;display:inline-block;}
+.itin-tt{font-weight:600;font-size:9px;color:var(--ba);line-height:1.2;}
+.itin-d{font-size:8px;color:var(--ink2);line-height:1.5;}
+.itin-cont{font-size:7px;color:var(--ba);font-weight:700;margin-top:5px;padding:2px 7px;background:var(--ba-light);border-radius:3px;display:inline-block;}
+
+/* hotels */
+.htbl{width:100%;border-collapse:collapse;}
+.htbl th{background:var(--ba);color:rgba(255,255,255,0.75);font-size:7px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:4px 6px;text-align:left;}
+.htbl td{padding:4px 6px;border-bottom:1px solid var(--rule);color:var(--ink);font-size:9px;vertical-align:middle;}
+.htbl tr:last-child td{border-bottom:none;}
+.htbl tr:nth-child(even) td{background:var(--sand);}
+.hcat{display:inline-block;background:rgba(var(--ba-rgb),0.11);color:var(--ba);border-radius:3px;font-size:6.5px;font-weight:700;padding:1px 4px;}
+.hn-line{font-size:7.5px;color:var(--muted);font-style:italic;margin-top:4px;}
+
+/* gallery */
+.gal-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;}
+.gal-ph{border-radius:4px;overflow:hidden;height:60px;}
+.gal-ph img{width:100%;height:100%;object-fit:cover;}
+
+/* inc/exc */
+.ie{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.ie-in{background:rgba(18,183,106,0.05);border:1px solid rgba(18,183,106,0.15);border-radius:5px;padding:8px 10px;}
+.ie-ex{background:rgba(255,33,75,0.04);border:1px solid rgba(255,33,75,0.12);border-radius:5px;padding:8px 10px;}
+.ie-hd{font-size:7.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;margin-bottom:5px;}
+.ie-in .ie-hd{color:var(--green);}
+.ie-ex .ie-hd{color:var(--red);}
+.ie-li{font-size:8px;color:var(--ink2);padding:1.5px 0;display:flex;align-items:flex-start;gap:4px;line-height:1.4;}
+.dot-g{color:var(--green);font-weight:700;flex-shrink:0;}
+.dot-r{color:var(--red);font-weight:700;flex-shrink:0;}
+
+/* tiers */
+.tier-row{display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid var(--rule);font-size:9.5px;}
+.tier-row:last-child{border-bottom:none;}
+.tier-lbl{color:var(--ink2);}
+.tier-p{font-weight:700;color:var(--ba);}
+
+/* policy */
+.pol-it{margin-bottom:5px;}
+.pol-lbl{font-size:7.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:1px;}
+.pol-val{font-size:8.5px;color:var(--ink2);line-height:1.5;}
+
+/* reviews */
+.tc{background:var(--sand);border:1px solid var(--rule);border-radius:5px;padding:7px 9px;margin-bottom:5px;}
+.tc-hd{display:flex;align-items:center;gap:6px;margin-bottom:4px;}
+.tc-av{width:25px;height:25px;border-radius:50%;border:1.5px solid var(--ba);background:var(--ba-light);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--ba);overflow:hidden;flex-shrink:0;}
+.tc-av img{width:100%;height:100%;object-fit:cover;}
+.tc-name{font-size:9px;font-weight:700;color:var(--ink);}
+.tc-trip{font-size:7.5px;color:var(--muted);}
+.tc-stars{color:var(--yellow);font-size:8.5px;}
+.tc-txt{font-size:8px;color:var(--ink2);line-height:1.5;font-style:italic;}
+
+/* right header */
+.rp-hdr{height:138px;position:relative;flex-shrink:0;overflow:hidden;}
+.rp-hdr-bg{width:100%;height:100%;background:linear-gradient(135deg,rgba(var(--ba-rgb),0.55),rgba(var(--ba-rgb),0.2));display:flex;align-items:center;justify-content:center;}
+.rp-hdr-bg svg{width:30px;height:30px;fill:none;stroke:rgba(255,255,255,0.28);stroke-width:1.2;}
+.rp-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+.rp-ov{position:absolute;inset:0;background:linear-gradient(180deg,transparent 30%,rgba(0,0,0,0.62) 100%);}
+.rp-pov{position:absolute;bottom:10px;left:13px;z-index:3;}
+.rp-plbl{font-size:7px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,0.48);margin-bottom:1px;}
+.rp-pval{font-family:'DM Sans',sans-serif;font-size:19px;font-weight:700;color:#fff;line-height:1;text-shadow:0 2px 8px rgba(0,0,0,0.5);}
+.rp-pper{font-size:8px;color:rgba(255,255,255,0.52);}
+
+/* footer */
+.bf{background:var(--ba);padding:9px 13px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.bf-left{display:flex;flex-direction:column;gap:1px;}
+.bf-ci{font-size:8px;color:rgba(255,255,255,0.68);}
+.bf-ci strong{color:#fff;}
+.bf-cta{display:flex;gap:6px;}
+.bf-btn{font-family:'DM Sans',sans-serif;font-size:8px;font-weight:700;padding:5px 12px;border-radius:20px;letter-spacing:.07em;text-transform:uppercase;}
+.bf-btn.solid{background:#fff;color:var(--ba);}
+.bf-btn.outline{background:transparent;color:#fff;border:1px solid rgba(255,255,255,0.36);}
+.bf-brand{font-family:'Playfair Display',serif;font-size:13px;font-weight:700;color:rgba(255,255,255,0.88);}
+.pg-cont-bar{background:var(--ba);height:22px;display:flex;align-items:center;justify-content:space-between;padding:0 13px;flex-shrink:0;}
+.pg-cont-bar span{font-size:7.5px;font-weight:600;color:rgba(255,255,255,0.56);}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sb-brand">
+    <div class="sb-mark"><svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5" fill="white" stroke="none"/></svg></div>
+    <div><div class="sb-title">TripDekhoo</div><div class="sb-sub">Brochure Builder</div></div>
+  </div>
+  <nav class="sb-nav">
+    <div class="ni active" onclick="nav('cover',this)"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>Cover</div>
+    <div class="ni" onclick="nav('hl',this)"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Highlights</div>
+    <div class="ni" onclick="nav('itin',this)"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>Itinerary</div>
+    <div class="ni" onclick="nav('hotels',this)"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Hotels</div>
+    <div class="ni" onclick="nav('incexc',this)"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Inc / Exc</div>
+    <div class="ni" onclick="nav('pricing',this)"><svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Pricing</div>
+    <div class="ni" onclick="nav('policy',this)"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Policy</div>
+    <div class="ni" onclick="nav('photos',this)"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>Photos</div>
+    <div class="ni" onclick="nav('reviews',this)"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Reviews</div>
+    <div class="ni" onclick="nav('contact',this)"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.01 1.18 2 2 0 012 .01h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>Contact</div>
+    <div class="ni" onclick="nav('theme',this)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>Theme</div>
+  </nav>
+  <div class="sb-body">
+    <div class="fs active" id="fs-cover">
+      <div class="sec-ttl">Cover Panel</div>
+      <div class="fg"><label>Agency / Brand Name</label><input id="f-agency" placeholder="TripDekhoo" oninput="up()"></div>
+      <div class="fg"><label>Agency Tagline</label><input id="f-atag" placeholder="Discover the World with Us" oninput="up()"></div>
+      <div class="fg"><label>Destination / Trip Title</label><input id="f-dest" placeholder="Ladakh — Land of High Passes" oninput="up()"></div>
+      <div class="fg"><label>Duration</label><input id="f-dur" placeholder="7 Nights / 8 Days" oninput="up()"></div>
+      <div class="fg"><label>Cover Tagline</label><input id="f-tagline" placeholder="Experience the magic of the Himalayas" oninput="up()"></div>
+      <div class="fg"><label>Chips (comma-separated)</label><input id="f-chips" placeholder="Pangong Lake, Nubra Valley, Khardung La" oninput="up()"></div>
+      <div class="sl">Cover Hero Image</div>
+      <div class="isl isl-w" id="sl-cover"><div class="isl-lbl">📷 Upload cover photo</div><input type="file" accept="image/*" onchange="loadImg(event,'sl-cover','cover')"><button class="irm" onclick="rmImg('sl-cover','cover',event)">✕</button></div>
+      <div class="sl">Agency Logo</div>
+      <div class="isl isl-w" id="sl-logo"><div class="isl-lbl">🏷️ Upload logo (PNG ideal)</div><input type="file" accept="image/*" onchange="loadImg(event,'sl-logo','logo')"><button class="irm" onclick="rmImg('sl-logo','logo',event)">✕</button></div>
+    </div>
+    <div class="fs" id="fs-hl">
+      <div class="sec-ttl">Trip Highlights</div>
+      <div id="hl-form"></div>
+      <button class="add-btn" onclick="addHL()">+ Add Highlight</button>
+    </div>
+    <div class="fs" id="fs-itin">
+      <div class="sec-ttl">Day-wise Itinerary</div>
+      <p style="font-size:10px;color:rgba(255,255,255,0.26);margin-bottom:10px;line-height:1.6;">Long itineraries auto-flow to additional A4 pages. No content is ever hidden or cut off.</p>
+      <div id="itin-form"></div>
+      <button class="add-btn" onclick="addDay()">+ Add Day</button>
+    </div>
+    <div class="fs" id="fs-hotels">
+      <div class="sec-ttl">Hotel Details</div>
+      <div id="hotel-form"></div>
+      <button class="add-btn" onclick="addHotel()">+ Add Hotel Row</button>
+      <div class="fg" style="margin-top:8px;"><label>Availability Note</label><input id="f-hnote" placeholder="Similar basis / Subject to availability" oninput="up()"></div>
+    </div>
+    <div class="fs" id="fs-incexc">
+      <div class="sec-ttl">Inclusions &amp; Exclusions</div>
+      <div class="fg"><label>Inclusions — one per line</label><textarea id="f-inc" rows="7" placeholder="Stay as per itinerary&#10;Daily breakfast &amp; dinner&#10;All transfers by AC vehicle&#10;Inner Line Permits&#10;All sightseeing as per itinerary" oninput="up()"></textarea></div>
+      <div class="fg"><label>Exclusions — one per line</label><textarea id="f-exc" rows="6" placeholder="Airfare / Train tickets&#10;Personal expenses&#10;Camera &amp; entry fees&#10;Adventure activity charges&#10;Travel insurance" oninput="up()"></textarea></div>
+    </div>
+    <div class="fs" id="fs-pricing">
+      <div class="sec-ttl">Package Cost</div>
+      <div class="fg"><label>Display Mode</label><select id="f-pmode" onchange="up()"><option value="price">Show Price</option><option value="req">Price on Request</option></select></div>
+      <div class="fg"><label>Starting Price</label><input id="f-price" placeholder="&#8377; 24,999" oninput="up()"></div>
+      <div class="fg"><label>Per</label><input id="f-pper" placeholder="per person (twin sharing)" oninput="up()"></div>
+      <div class="fg"><label>Price Note</label><input id="f-pnote" placeholder="*Prices inclusive of GST" oninput="up()"></div>
+      <div class="sl">Package Tiers (optional)</div>
+      <div id="tier-form"></div>
+      <button class="add-btn" onclick="addTier()">+ Add Package Tier</button>
+    </div>
+    <div class="fs" id="fs-policy">
+      <div class="sec-ttl">Policies</div>
+      <div class="fg"><label>Cancellation Policy</label><textarea id="f-cancel" placeholder="Free cancellation up to 30 days. 50% refund 15-30 days. No refund within 15 days." oninput="up()"></textarea></div>
+      <div class="fg"><label>Reschedule / Modification</label><textarea id="f-reschedule" placeholder="Modification allowed up to 15 days prior with 500 admin fee." oninput="up()"></textarea></div>
+      <div class="fg"><label>Refund Terms</label><textarea id="f-refund" placeholder="Refunds processed within 7-10 business days." oninput="up()"></textarea></div>
+    </div>
+    <div class="fs" id="fs-photos">
+      <div class="sec-ttl">Photos</div>
+      <div class="sl">Right Panel Header Image</div>
+      <div class="isl isl-w" id="sl-rp"><div class="isl-lbl">&#128444;&#65039; Right panel top image</div><input type="file" accept="image/*" onchange="loadImg(event,'sl-rp','rp')"><button class="irm" onclick="rmImg('sl-rp','rp',event)">&#10005;</button></div>
+      <div class="sl">Middle Gallery Photos</div>
+      <div class="isl-g">
+        <div class="isl isl-s" id="sl-g1"><div class="isl-lbl">Photo 1</div><input type="file" accept="image/*" onchange="loadImg(event,'sl-g1','g1')"><button class="irm" onclick="rmImg('sl-g1','g1',event)">&#10005;</button></div>
+        <div class="isl isl-s" id="sl-g2"><div class="isl-lbl">Photo 2</div><input type="file" accept="image/*" onchange="loadImg(event,'sl-g2','g2')"><button class="irm" onclick="rmImg('sl-g2','g2',event)">&#10005;</button></div>
+      </div>
+    </div>
+    <div class="fs" id="fs-reviews">
+      <div class="sec-ttl">Traveller Reviews</div>
+      <div id="review-form"></div>
+      <button class="add-btn" onclick="addReview()">+ Add Review</button>
+    </div>
+    <div class="fs" id="fs-contact">
+      <div class="sec-ttl">Contact &amp; Footer</div>
+      <div class="fr">
+        <div class="fg"><label>Phone</label><input id="f-phone" placeholder="+91 98765 43210" oninput="up()"></div>
+        <div class="fg"><label>Email</label><input id="f-email" placeholder="hello@tripdekhoo.com" oninput="up()"></div>
+      </div>
+      <div class="fg"><label>Website</label><input id="f-web" placeholder="www.tripdekhoo.com" oninput="up()"></div>
+      <div class="fr">
+        <div class="fg"><label>CTA Button 1</label><input id="f-cta1" placeholder="Book Now" oninput="up()"></div>
+        <div class="fg"><label>CTA Button 2</label><input id="f-cta2" placeholder="Get Quote" oninput="up()"></div>
+      </div>
+    </div>
+    <div class="fs" id="fs-theme">
+      <div class="sec-ttl">Brand Theme Color</div>
+      <p style="font-size:10px;color:rgba(255,255,255,0.24);line-height:1.6;margin-bottom:9px;">Drives accents, headers, strips and footer across all pages.</p>
+      <div class="cc-grid">
+        <button class="cc active" style="background:#5850FE" onclick="applyTheme('#5850FE','#3d36d4','88,80,254','#ede9ff',this)" title="Indigo"></button>
+        <button class="cc" style="background:#e8a847" onclick="applyTheme('#e8a847','#c47d1e','232,168,71','#fff8e8',this)" title="Gold"></button>
+        <button class="cc" style="background:#16a34a" onclick="applyTheme('#16a34a','#0d7a30','22,163,74','#dcfce7',this)" title="Forest"></button>
+        <button class="cc" style="background:#0ea5e9" onclick="applyTheme('#0ea5e9','#0284c7','14,165,233','#e0f2fe',this)" title="Sky"></button>
+        <button class="cc" style="background:#dc2626" onclick="applyTheme('#dc2626','#b91c1c','220,38,38','#fee2e2',this)" title="Red"></button>
+        <button class="cc" style="background:#7c3aed" onclick="applyTheme('#7c3aed','#6d28d9','124,58,237','#ede9fe',this)" title="Violet"></button>
+        <button class="cc" style="background:#0d9488" onclick="applyTheme('#0d9488','#0f766e','13,148,136','#ccfbf1',this)" title="Teal"></button>
+        <button class="cc" style="background:#d97706" onclick="applyTheme('#d97706','#b45309','217,119,6','#fef3c7',this)" title="Amber"></button>
+        <button class="cc" style="background:#db2777" onclick="applyTheme('#db2777','#be185d','219,39,119','#fce7f3',this)" title="Pink"></button>
+        <button class="cc" style="background:#1d4ed8" onclick="applyTheme('#1d4ed8','#1e40af','29,78,216','#dbeafe',this)" title="Blue"></button>
+        <button class="cc" style="background:#374151" onclick="applyTheme('#374151','#1f2937','55,65,81','#f3f4f6',this)" title="Slate"></button>
+        <button class="cc" style="background:#9f1239" onclick="applyTheme('#9f1239','#881337','159,18,57','#ffe4e6',this)" title="Rose"></button>
+        <button class="cc" style="background:#854d0e" onclick="applyTheme('#854d0e','#6b3a08','133,77,14','#fef9c3',this)" title="Brown"></button>
+        <button class="cc" style="background:#166534" onclick="applyTheme('#166534','#0f4a26','22,101,52','#dcfce7',this)" title="Dark Green"></button>
+        <button class="cc" style="background:#1e3a5f" onclick="applyTheme('#1e3a5f','#122540','30,58,95','#dbeafe',this)" title="Navy"></button>
+        <button class="cc" style="background:#6b21a8" onclick="applyTheme('#6b21a8','#581c87','107,33,168','#f3e8ff',this)" title="Purple"></button>
+      </div>
+      <div class="sl" style="margin-top:11px;">Custom Color</div>
+      <div style="display:flex;gap:7px;align-items:center;">
+        <input type="color" id="f-ccolor" value="#5850FE" style="width:40px;height:32px;padding:2px;cursor:pointer;border-radius:5px;" oninput="customColor(this.value)">
+        <input type="text" id="f-chex" placeholder="#5850FE" style="flex:1;" oninput="customHex(this.value)">
+      </div>
+    </div>
+  </div>
+  <div class="sb-acts">
+    <button class="btn-p" id="dl-btn" onclick="downloadPDF()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Download PDF (A4 Landscape)
+    </button>
+    <button class="btn-s" onclick="window.print()">&#128424; Print Brochure</button>
+  </div>
+</div>
+
+<!-- PREVIEW -->
+<div class="preview-area">
+  <div class="pt">
+    <div style="display:flex;align-items:center;">
+      <span class="pt-lbl">Live Preview &mdash; A4 Landscape &middot; 297&times;210 mm</span>
+      <span class="pg-badge" id="pg-badge">1 Page</span>
+    </div>
+    <div class="pt-r">
+      <div class="zg">
+        <button class="zb" onclick="setZoom(0.52,this)">52%</button>
+        <button class="zb active" onclick="setZoom(0.70,this)">70%</button>
+        <button class="zb" onclick="setZoom(1,this)">100%</button>
+      </div>
+      <button class="dl2" id="dl-btn2" onclick="downloadPDF()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export PDF
+      </button>
+    </div>
+  </div>
+  <div id="pages-scale" style="transform-origin:top center;transform:scale(0.70);margin-bottom:-240px;">
+    <div id="pages-wrap"></div>
+  </div>
+</div>
+</div>
+
+<script>
+var S={hls:[],itin:[],hotels:[],tiers:[],reviews:[],imgs:{}};
+var CZ=0.70;
+var EMOJIS=['&#9992;&#65039;','&#127956;','&#127754;','&#127958;','&#128506;','&#129523;','&#127748;','&#127749;','&#127957;','&#128642;','&#128741;&#65039;','&#128641;','&#129419;','&#129409;','&#128024;','&#128044;','&#127802;','&#127796;','&#9978;','&#127981;','&#127983;','&#128332;','&#128508;','&#127761;','&#127757;','&#127759;','&#129517;','&#128247;','&#127874;','&#128644;','&#127965;','&#127755;','&#127964;','&#127807;','&#9975;&#65039;','&#129344;','&#127935;','&#127940;','&#129495;','&#128693;','&#127776;','&#127752;','&#127999;&#65039;','&#9961;&#65039;','&#127963;','&#128509;','&#127969;','&#128418;','&#128042;','&#11088;','&#127769;','&#9728;&#65039;','&#10052;&#65039;','&#127938;','&#127907;'];
+
+function nav(id,el){
+  document.querySelectorAll('.fs').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  document.getElementById('fs-'+id).classList.add('active');
+  el.classList.add('active');
+}
+function setZoom(z,btn){
+  CZ=z;
+  var sc=document.getElementById('pages-scale');
+  sc.style.transform='scale('+z+')';
+  setTimeout(function(){
+    var h=document.getElementById('pages-wrap').offsetHeight||794;
+    sc.style.marginBottom=(-(h*(1-z)))+'px';
+  },80);
+  document.querySelectorAll('.zb').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+}
+function applyTheme(col,dk,rgb,lt,btn){
+  var r=document.documentElement;
+  r.style.setProperty('--ba',col);r.style.setProperty('--ba-dark',dk);
+  r.style.setProperty('--ba-rgb',rgb);r.style.setProperty('--ba-light',lt);
+  if(btn){document.querySelectorAll('.cc').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
+  document.getElementById('f-chex').value=col;
+  document.getElementById('f-ccolor').value=col;
+  up();
+}
+function customColor(h){document.getElementById('f-chex').value=h;applyCustom(h);}
+function customHex(h){if(/^#[0-9a-fA-F]{6}$/.test(h)){document.getElementById('f-ccolor').value=h;applyCustom(h);}}
+function applyCustom(hex){
+  var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  var dk='#'+[r-20,g-20,b-20].map(v=>Math.max(0,Math.min(255,v)).toString(16).padStart(2,'0')).join('');
+  document.documentElement.style.setProperty('--ba',hex);
+  document.documentElement.style.setProperty('--ba-dark',dk);
+  document.documentElement.style.setProperty('--ba-rgb',r+','+g+','+b);
+  document.querySelectorAll('.cc').forEach(b=>b.classList.remove('active'));
+  up();
+}
+function loadImg(e,slotId,key){
+  var f=e.target.files[0];if(!f)return;
+  var rd=new FileReader();
+  rd.onload=function(ev){
+    S.imgs[key]=ev.target.result;
+    var slot=document.getElementById(slotId);
+    if(slot){var pi=slot.querySelector('.pi');if(pi)pi.remove();var img=document.createElement('img');img.className='pi';img.src=ev.target.result;slot.appendChild(img);var lbl=slot.querySelector('.isl-lbl');if(lbl)lbl.style.display='none';}
+    up();
+  };
+  rd.readAsDataURL(f);
+}
+function rmImg(slotId,key,e){
+  e.preventDefault();e.stopPropagation();
+  S.imgs[key]=null;
+  var slot=document.getElementById(slotId);
+  if(slot){var pi=slot.querySelector('.pi');if(pi)pi.remove();var lbl=slot.querySelector('.isl-lbl');if(lbl)lbl.style.display='';}
+  up();
+}
+function addHL(){S.hls.push({icon:'',text:''});renderHLForm();}
+function renderHLForm(){
+  var el=document.getElementById('hl-form');el.innerHTML='';
+  S.hls.forEach(function(h,i){
+    var c=document.createElement('div');c.className='ic';
+    c.innerHTML='<div class="ic-hd"><span class="ic-lbl">Highlight '+(i+1)+'</span><button class="rm" onclick="S.hls.splice('+i+',1);renderHLForm();up()">&#10005;</button></div>'+
+      '<div class="ei-row"><input class="ei" type="text" value="'+esc(h.icon)+'" placeholder="&#9992;" oninput="S.hls['+i+'].icon=this.value;up()"><button class="ep-tog" onclick="toggleEP('+i+')">&#128522;</button>'+
+      '<input type="text" value="'+esc(h.text)+'" placeholder="Pangong Lake Sunrise" style="flex:1;" oninput="S.hls['+i+'].text=this.value;up()"></div>'+
+      '<div class="epicker" id="ep-'+i+'">'+EMOJIS.map((em,j)=>'<button class="eb" onclick="pickE('+i+','+j+')">'+em+'</button>').join('')+'</div>';
+    el.appendChild(c);
+  });
+}
+var RAW_EMOJIS=['✈️','🏔️','🌊','🏖️','🗺️','🧳','🌄','🌅','🏕️','🚂','🛥️','🚁','🦋','🦁','🐘','🐬','🌺','🌴','⛺','🎭','🏯','🕌','🗼','🎑','🌍','🌏','🧭','📸','🎒','🛤️','🏝️','🌋','🏜️','🌿','⛷️','🤿','🎿','🏄','🧗','🚵','🌠','🌈','🏟️','⛩️','🏛️','🗽','🎡','🎢','🐪','⭐','🌙','☀️','❄️','🏂','🎣'];
+function toggleEP(i){document.getElementById('ep-'+i).classList.toggle('open');}
+function pickE(i,j){S.hls[i].icon=RAW_EMOJIS[j];document.getElementById('ep-'+i).classList.remove('open');renderHLForm();up();}
+function addDay(){S.itin.push({title:'',desc:''});renderItinForm();}
+function renderItinForm(){
+  var el=document.getElementById('itin-form');el.innerHTML='';
+  S.itin.forEach(function(d,i){
+    var c=document.createElement('div');c.className='ic';
+    c.innerHTML='<div class="ic-hd"><span class="ic-lbl">Day '+(i+1)+'</span><button class="rm" onclick="S.itin.splice('+i+',1);renderItinForm();up()">&#10005;</button></div>'+
+      '<div class="fg"><label>Title</label><input type="text" value="'+esc(d.title)+'" placeholder="Arrive Leh &mdash; Acclimatization" oninput="S.itin['+i+'].title=this.value;up()"></div>'+
+      '<div class="fg"><label>Description</label><textarea placeholder="Brief summary of the day..." oninput="S.itin['+i+'].desc=this.value;up()">'+esc(d.desc)+'</textarea></div>';
+    el.appendChild(c);
+  });
+}
+function addHotel(){S.hotels.push({city:'',cat:'Standard',name:'',rooms:1,sharing:'Double'});renderHotelForm();}
+function renderHotelForm(){
+  var el=document.getElementById('hotel-form');el.innerHTML='';
+  S.hotels.forEach(function(h,i){
+    var c=document.createElement('div');c.className='ic';
+    c.innerHTML='<div class="ic-hd"><span class="ic-lbl">Hotel '+(i+1)+'</span><button class="rm" onclick="S.hotels.splice('+i+',1);renderHotelForm();up()">&#10005;</button></div>'+
+      '<div class="fr"><div class="fg"><label>City</label><input type="text" value="'+esc(h.city)+'" placeholder="Leh" oninput="S.hotels['+i+'].city=this.value;up()"></div>'+
+      '<div class="fg"><label>Category</label><select onchange="S.hotels['+i+'].cat=this.value;up()">'+['Standard','Deluxe','Super Deluxe','Luxury'].map(o=>'<option'+(h.cat===o?' selected':'')+'>'+o+'</option>').join('')+'</select></div></div>'+
+      '<div class="fg"><label>Hotel Name(s)</label><input type="text" value="'+esc(h.name)+'" placeholder="The Grand Dragon / Similar" oninput="S.hotels['+i+'].name=this.value;up()"></div>'+
+      '<div class="fr"><div class="fg"><label>No. of Rooms</label><input type="number" min="1" value="'+h.rooms+'" oninput="S.hotels['+i+'].rooms=this.value;up()"></div>'+
+      '<div class="fg"><label>Room Sharing</label><select onchange="S.hotels['+i+'].sharing=this.value;up()">'+['Single','Double','Triple'].map(o=>'<option'+(h.sharing===o?' selected':'')+'>'+o+'</option>').join('')+'</select></div></div>';
+    el.appendChild(c);
+  });
+}
+function addTier(){S.tiers.push({label:'',price:''});renderTierForm();}
+function renderTierForm(){
+  var el=document.getElementById('tier-form');el.innerHTML='';
+  S.tiers.forEach(function(t,i){
+    var c=document.createElement('div');c.className='ic';
+    c.innerHTML='<div class="ic-hd"><span class="ic-lbl">Tier '+(i+1)+'</span><button class="rm" onclick="S.tiers.splice('+i+',1);renderTierForm();up()">&#10005;</button></div>'+
+      '<div class="fr"><div class="fg"><label>Label</label><input type="text" value="'+esc(t.label)+'" placeholder="Standard" oninput="S.tiers['+i+'].label=this.value;up()"></div>'+
+      '<div class="fg"><label>Price</label><input type="text" value="'+esc(t.price)+'" placeholder="&#8377;18,999" oninput="S.tiers['+i+'].price=this.value;up()"></div></div>';
+    el.appendChild(c);
+  });
+}
+function addReview(){S.reviews.push({name:'',trip:'',stars:5,text:'',akey:null});renderReviewForm();}
+function renderReviewForm(){
+  var el=document.getElementById('review-form');el.innerHTML='';
+  S.reviews.forEach(function(rv,i){
+    var slotId='sl-av-'+i,ak='av-'+i;
+    var c=document.createElement('div');c.className='ic';
+    c.innerHTML='<div class="ic-hd"><span class="ic-lbl">Review '+(i+1)+'</span><button class="rm" onclick="S.reviews.splice('+i+',1);renderReviewForm();up()">&#10005;</button></div>'+
+      '<div class="fr"><div class="fg"><label>Name</label><input type="text" value="'+esc(rv.name)+'" placeholder="Priya S." oninput="S.reviews['+i+'].name=this.value;up()"></div>'+
+      '<div class="fg"><label>Trip</label><input type="text" value="'+esc(rv.trip)+'" placeholder="Ladakh 2024" oninput="S.reviews['+i+'].trip=this.value;up()"></div></div>'+
+      '<div class="fg"><label>Stars (1-5)</label><input type="number" min="1" max="5" value="'+(rv.stars||5)+'" oninput="S.reviews['+i+'].stars=parseInt(this.value)||5;up()"></div>'+
+      '<div class="fg"><label>Review Text</label><textarea placeholder="Amazing trip..." oninput="S.reviews['+i+'].text=this.value;up()">'+esc(rv.text)+'</textarea></div>'+
+      '<div class="sl" style="margin-top:5px;font-size:8px;">Avatar (optional)</div>'+
+      '<div class="isl isl-s" id="'+slotId+'"><div class="isl-lbl">Upload avatar</div><input type="file" accept="image/*" onchange="loadAvatar(event,'+i+')"><button class="irm" onclick="clearAvatar('+i+',\''+slotId+'\',event)">&#10005;</button></div>';
+    el.appendChild(c);
+    if(S.imgs[ak]){var slot=document.getElementById(slotId);if(slot){var pi=document.createElement('img');pi.className='pi';pi.src=S.imgs[ak];slot.appendChild(pi);var lbl=slot.querySelector('.isl-lbl');if(lbl)lbl.style.display='none';}}
+  });
+}
+function loadAvatar(e,i){
+  var f=e.target.files[0];if(!f)return;
+  var rd=new FileReader();
+  rd.onload=function(ev){
+    var k='av-'+i;S.imgs[k]=ev.target.result;S.reviews[i].akey=k;
+    var slot=document.getElementById('sl-av-'+i);
+    if(slot){var pi=document.createElement('img');pi.className='pi';pi.src=ev.target.result;slot.appendChild(pi);var lbl=slot.querySelector('.isl-lbl');if(lbl)lbl.style.display='none';}
+    up();
+  };
+  rd.readAsDataURL(f);
+}
+function clearAvatar(i,slotId,e){
+  e.preventDefault();e.stopPropagation();
+  var k='av-'+i;S.imgs[k]=null;S.reviews[i].akey=null;
+  var slot=document.getElementById(slotId);
+  if(slot){var pi=slot.querySelector('.pi');if(pi)pi.remove();var lbl=slot.querySelector('.isl-lbl');if(lbl)lbl.style.display='';}
+  up();
+}
+
+function g(id){return document.getElementById(id);}
+function v(id){var e=g(id);return e?e.value.trim():'';}
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function ico(p){return '<div class="cb-ico"><svg viewBox="0 0 24 24">'+p+'</svg></div>';}
+function cbHd(p,t){return '<div class="cb-hd">'+ico(p)+'<div class="cb-ttl">'+t+'</div><div class="cb-line"></div></div>';}
+
+/* HTML BUILDERS */
+function hlHTML(){
+  if(!S.hls.length)return '<div style="font-size:7.5px;color:#bbb;font-style:italic;">Add highlights from sidebar</div>';
+  return '<div class="hl-grid">'+S.hls.map(h=>'<div class="hl-item"><span class="hl-ico">'+(h.icon||'&#10022;')+'</span><span class="hl-txt">'+esc(h.text)+'</span></div>').join('')+'</div>';
+}
+function dayBlock(d,i){
+  return '<div class="itin-day"><div class="itin-n"><div class="itin-nb">'+(i+1)+'</div><div class="itin-ns">DAY</div></div>'+
+    '<div class="itin-c"><div class="itin-tb"><span class="itin-tt">'+esc(d.title)+'</span></div>'+(d.desc?'<div class="itin-d">'+esc(d.desc)+'</div>':'')+'</div></div>';
+}
+function dayH(d){return 40+(d.desc?Math.ceil(d.desc.length/52)*11:0);}
+function hotelHTML(){
+  if(!S.hotels.length)return '<div style="font-size:7.5px;color:#bbb;font-style:italic;">Add hotels from sidebar</div>';
+  return '<table class="htbl"><thead><tr><th>City</th><th>Hotel</th><th>Cat</th><th>Rooms</th><th>Sharing</th></tr></thead><tbody>'+
+    S.hotels.map(h=>'<tr><td>'+esc(h.city)+'</td><td>'+esc(h.name)+'</td><td><span class="hcat">'+esc(h.cat)+'</span></td><td>'+esc(h.rooms)+'</td><td>'+esc(h.sharing)+'</td></tr>').join('')+
+    '</tbody></table><div class="hn-line">'+esc(v('f-hnote'))+'</div>';
+}
+function galHTML(){
+  var g1=S.imgs['g1'],g2=S.imgs['g2'];
+  if(!g1&&!g2)return '';
+  return '<div class="gal-grid">'+(g1?'<div class="gal-ph"><img src="'+g1+'"></div>':'')+(g2?'<div class="gal-ph"><img src="'+g2+'"></div>':'')+'</div>';
+}
+function ieHTML(){
+  var iL=v('f-inc')?v('f-inc').split('\n').filter(l=>l.trim()):[];
+  var eL=v('f-exc')?v('f-exc').split('\n').filter(l=>l.trim()):[];
+  return '<div class="ie"><div class="ie-in"><div class="ie-hd">&#10003; Included</div>'+(iL.length?iL.map(l=>'<div class="ie-li"><span class="dot-g">&#10003;</span><span>'+esc(l)+'</span></div>').join(''):'<div style="font-size:7.5px;color:#bbb;font-style:italic;">Add from sidebar</div>')+'</div>'+
+    '<div class="ie-ex"><div class="ie-hd">&#10007; Excluded</div>'+(eL.length?eL.map(l=>'<div class="ie-li"><span class="dot-r">&#10007;</span><span>'+esc(l)+'</span></div>').join(''):'<div style="font-size:7.5px;color:#bbb;font-style:italic;">Add from sidebar</div>')+'</div></div>';
+}
+function polHTML(){
+  return '<div class="pol-it"><div class="pol-lbl">Cancellation</div><div class="pol-val">'+esc(v('f-cancel')||'Free cancellation up to 30 days prior.')+'</div></div>'+
+    '<div class="pol-it"><div class="pol-lbl">Modification</div><div class="pol-val">'+esc(v('f-reschedule')||'Modification allowed 15 days prior.')+'</div></div>'+
+    '<div class="pol-it"><div class="pol-lbl">Refund</div><div class="pol-val">'+esc(v('f-refund')||'Processed within 7-10 business days.')+'</div></div>';
+}
+function tiersHTML(){
+  if(!S.tiers.length)return '';
+  return S.tiers.map(t=>'<div class="tier-row"><span class="tier-lbl">'+esc(t.label)+'</span><span class="tier-p">'+esc(t.price)+'</span></div>').join('');
+}
+function reviewsHTML(){
+  if(!S.reviews.length)return '<div style="font-size:7.5px;color:#bbb;font-style:italic;">Add reviews from sidebar</div>';
+  return S.reviews.map(function(rv){
+    var stars='&#9733;'.repeat(Math.max(1,Math.min(5,rv.stars||5)))+'&#9734;'.repeat(5-(rv.stars||5));
+    var avSrc=rv.akey?S.imgs[rv.akey]:null;
+    var av=avSrc?'<div class="tc-av"><img src="'+avSrc+'"></div>':'<div class="tc-av">'+(rv.name||'?').charAt(0).toUpperCase()+'</div>';
+    return '<div class="tc"><div class="tc-hd">'+av+'<div><div class="tc-name">'+esc(rv.name)+'</div><div class="tc-trip">'+esc(rv.trip)+'</div><div class="tc-stars">'+stars+'</div></div></div><div class="tc-txt">&ldquo;'+esc(rv.text)+'&rdquo;</div></div>';
+  }).join('');
+}
+
+/* PAGE BUILDERS */
+function coverPanel(){
+  var ag=esc(v('f-agency')||'TripDekhoo');
+  var chips=v('f-chips')?v('f-chips').split(',').map(s=>'<span class="cv-chip">'+esc(s.trim())+'</span>').join(''):'';
+  var ci=S.imgs['cover']?'<img class="cv-img" src="'+S.imgs['cover']+'">':'';
+  var li=S.imgs['logo']?'<img class="cv-logo" src="'+S.imgs['logo']+'">':'';
+  return '<div class="bp-l">'+ci+'<div class="cv-ov"></div><div class="cv-body">'+
+    '<div class="cv-top"><div class="cv-logo-row">'+li+'<div><div class="cv-brand">'+ag+'</div><div class="cv-brand-sub">'+esc(v('f-atag')||'Discover the World with Us')+'</div></div></div></div>'+
+    '<div class="cv-bottom"><div class="cv-badge">Travel Brochure</div>'+
+    '<div class="cv-dur">'+esc(v('f-dur')||'7 Nights / 8 Days')+'</div>'+
+    '<div class="cv-dest">'+esc(v('f-dest')||'Ladakh &mdash; Land of High Passes')+'</div>'+
+    '<div class="cv-tagline">'+esc(v('f-tagline')||'Experience the magic of the Himalayas')+'</div>'+
+    '<div class="cv-chips">'+chips+'</div>'+
+    '<div class="cv-div"></div>'+
+    '<div class="cv-agency">'+ag+'</div>'+
+    '<div class="cv-agency-sub">'+esc(v('f-atag')||'Discover the World with Us')+'</div>'+
+    '</div></div></div>';
+}
+function stripPanel(n){
+  return '<div class="bp-strip"><span class="strip-txt">'+esc(v('f-agency')||'TripDekhoo')+'</span><span class="strip-pg">'+n+'</span></div>';
+}
+function rightColHTML(total){
+  var rpSrc=S.imgs['rp'];
+  var pmode=v('f-pmode'),pval=pmode==='req'?'On Request':(v('f-price')||'&#8377; 24,999');
+  var pfs=pmode==='req'?'15px':'19px';
+  var tb=tiersHTML();
+  var tierSec=tb?'<div class="cb">'+cbHd('<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>','Package Options')+tb+'</div>':'';
+  return '<div class="bp-col" style="border-right:none;">'+
+    '<div class="rp-hdr"><div class="rp-hdr-bg"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>'+
+    (rpSrc?'<img class="rp-img" src="'+rpSrc+'">':'')+
+    '<div class="rp-ov"></div>'+
+    '<div class="rp-pov"><div class="rp-plbl">Package Starting From</div><div class="rp-pval" style="font-size:'+pfs+'">'+pval+'</div><div class="rp-pper">'+esc(v('f-pper')||'per person (twin sharing)')+'</div></div></div>'+
+    tierSec+
+    '<div class="cb">'+cbHd('<polyline points="20 6 9 17 4 12"/>','Inclusions &amp; Exclusions')+ieHTML()+'</div>'+
+    '<div class="cb">'+cbHd('<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>','Policies')+polHTML()+'</div>'+
+    '<div class="cb grow">'+cbHd('<path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>','Traveller Reviews')+reviewsHTML()+'</div>'+
+    footerHTML(true,total,total)+
+    '</div>';
+}
+function footerHTML(isLast,pg,total){
+  if(isLast){
+    return '<div class="bf">'+
+      '<div class="bf-left">'+
+      '<div class="bf-ci">&#128222; <strong>'+esc(v('f-phone')||'+91 98765 43210')+'</strong></div>'+
+      '<div class="bf-ci">&#9993;&#65039; <strong>'+esc(v('f-email')||'hello@tripdekhoo.com')+'</strong></div>'+
+      '<div class="bf-ci">&#127760; <strong>'+esc(v('f-web')||'www.tripdekhoo.com')+'</strong></div></div>'+
+      '<div class="bf-cta"><div class="bf-btn solid">'+esc(v('f-cta1')||'Book Now')+'</div><div class="bf-btn outline">'+esc(v('f-cta2')||'Get Quote')+'</div></div>'+
+      '<div class="bf-brand">'+esc(v('f-agency')||'TripDekhoo')+'</div></div>';
+  }
+  return '<div class="pg-cont-bar"><span>'+esc(v('f-agency')||'TripDekhoo')+' &mdash; Continued</span><span>Page '+pg+' of '+total+'</span></div>';
+}
+
+/* MULTI-PAGE LAYOUT ENGINE */
+function up(){
+  var PAGE_H=794, FOOTER_H=22, COL_AVAIL=PAGE_H-FOOTER_H;
+  var HL_H=S.hls.length?Math.ceil(S.hls.length/2)*22+32:30;
+  var ITIN_HD=32;
+
+  /* Distribute days to page 1 mid column */
+  var p1used=HL_H+ITIN_HD+6, p1days=[], ofdays=[];
+  S.itin.forEach(function(d,i){
+    var h=dayH(d)+2;
+    if(p1used+h<=COL_AVAIL-10){p1used+=h;p1days.push({d,i});}
+    else{ofdays.push({d,i});}
+  });
+
+  /* Pack overflow into extra pages, 2 cols each */
+  var extraPages=[];
+  if(ofdays.length||S.hotels.length||(S.imgs['g1']||S.imgs['g2'])){
+    var ep={A:[],B:[],AH:ITIN_HD,BH:ITIN_HD,Bfull:false};
+    var useB=false;
+    ofdays.forEach(function(obj){
+      var h=dayH(obj.d)+4;
+      if(!useB){
+        if(ep.AH+h<=COL_AVAIL){ep.A.push(obj);ep.AH+=h;}
+        else{useB=true;ep.B.push(obj);ep.BH+=h;}
+      } else {
+        if(ep.BH+h<=COL_AVAIL){ep.B.push(obj);ep.BH+=h;}
+        else{extraPages.push(ep);ep={A:[],B:[],AH:ITIN_HD,BH:ITIN_HD,Bfull:false};useB=false;ep.A.push(obj);ep.AH+=h;}
+      }
+    });
+    /* Hotels + gallery */
+    var xH=(S.hotels.length?S.hotels.length*22+42:0)+((S.imgs['g1']||S.imgs['g2'])?74:0);
+    if(xH>0){
+      var placed=false;
+      if(!useB&&ep.AH+xH<=COL_AVAIL){if(S.hotels.length)ep.A.push('hotels');if(S.imgs['g1']||S.imgs['g2'])ep.A.push('gallery');placed=true;}
+      else if(ep.BH+xH<=COL_AVAIL){if(S.hotels.length)ep.B.push('hotels');if(S.imgs['g1']||S.imgs['g2'])ep.B.push('gallery');placed=true;}
+      if(!placed){extraPages.push(ep);ep={A:[],B:[],AH:ITIN_HD,BH:ITIN_HD,Bfull:false};if(S.hotels.length)ep.A.push('hotels');if(S.imgs['g1']||S.imgs['g2'])ep.A.push('gallery');}
+    }
+    if(ep.A.length||ep.B.length)extraPages.push(ep);
+  }
+
+  var total=1+extraPages.length;
+  var hasHotelP1=!ofdays.length&&S.hotels.length;
+  var hasGalP1=!ofdays.length&&(S.imgs['g1']||S.imgs['g2']);
+
+  /* Page 1 */
+  var midCol='<div class="bp-col">'+
+    '<div class="cb">'+cbHd('<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>','Trip Highlights')+hlHTML()+'</div>'+
+    '<div class="cb">'+cbHd('<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/>','Day-wise Itinerary')+
+    (p1days.length?'<div>'+p1days.map(o=>dayBlock(o.d,o.i)).join('')+'</div>'+(ofdays.length?'<div class="itin-cont">&#8595; Continued on next page</div>':''):'<div style="font-size:7.5px;color:#bbb;font-style:italic;">Add days from sidebar</div>')+
+    '</div>'+
+    (hasHotelP1?'<div class="cb">'+cbHd('<path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>','Hotel Details')+hotelHTML()+'</div>':'')+
+    (hasGalP1?'<div class="cb">'+cbHd('<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>','Gallery')+galHTML()+'</div>':'')+
+    '</div>';
+
+  var page1='<div class="bpage p1" id="bpage-1">'+coverPanel()+midCol+rightColHTML(total)+'</div>';
+
+  /* Extra pages */
+  function colItems(items){
+    if(!items.length)return '';
+    var html='';
+    var itinItems=items.filter(x=>typeof x==='object');
+    if(itinItems.length)html+='<div class="cb">'+cbHd('<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/>','Itinerary Continued')+'<div>'+itinItems.map(o=>dayBlock(o.d,o.i)).join('')+'</div></div>';
+    if(items.includes('hotels'))html+='<div class="cb">'+cbHd('<path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>','Hotel Details')+hotelHTML()+'</div>';
+    if(items.includes('gallery'))html+='<div class="cb">'+cbHd('<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>','Gallery')+galHTML()+'</div>';
+    return html;
+  }
+
+  var extraHTML=extraPages.map(function(ep,pi){
+    var pgNum=pi+2, isLast=pgNum===total;
+    return '<div class="bpage px" id="bpage-'+pgNum+'">'+stripPanel(pgNum)+
+      '<div class="bp-col" style="display:flex;flex-direction:column;">'+colItems(ep.A)+'</div>'+
+      '<div class="bp-col" style="border-right:none;display:flex;flex-direction:column;">'+colItems(ep.B)+
+      footerHTML(isLast,pgNum,total)+
+      '</div></div>';
+  }).join('');
+
+  g('pages-wrap').innerHTML=page1+extraHTML;
+  var badge=g('pg-badge');
+  if(badge)badge.textContent=total===1?'1 Page':total+' Pages';
+  setTimeout(function(){setZoom(CZ,null);},80);
+}
+
+/* PDF — capture all pages sequentially */
+async function downloadPDF(){
+  var b1=g('dl-btn'),b2=g('dl-btn2');
+  [b1,b2].forEach(b=>{if(b){b.disabled=true;b.textContent='&#9203; Generating...';}});
+  try{
+    var sc=g('pages-scale');
+    var prevT=sc.style.transform,prevM=sc.style.marginBottom;
+    sc.style.transform='scale(1)';sc.style.marginBottom='0';
+    await new Promise(r=>setTimeout(r,500));
+    var {jsPDF}=window.jspdf;
+    var pdf=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+    var pages=document.querySelectorAll('.bpage');
+    for(var pi=0;pi<pages.length;pi++){
+      if(pi>0)pdf.addPage('a4','landscape');
+      var canvas=await html2canvas(pages[pi],{
+        scale:3,useCORS:true,allowTaint:true,
+        backgroundColor:'#ffffff',width:1122,height:794,
+        windowWidth:1122,windowHeight:794
+      });
+      pdf.addImage(canvas.toDataURL('image/jpeg',0.96),'JPEG',0,0,297,210);
+    }
+    sc.style.transform=prevT;sc.style.marginBottom=prevM;
+    pdf.save((v('f-dest')||'TripDekhoo-Brochure').replace(/[^a-z0-9\s]/gi,'-').replace(/\s+/g,'-')+'.pdf');
+  }catch(err){alert('PDF failed. Please use Chrome.\n'+err.message);console.error(err);}
+  [b1,b2].forEach(b=>{if(b){b.disabled=false;}});
+  if(b1)b1.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download PDF (A4 Landscape)';
+  if(b2)b2.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Export PDF';
+}
+
+/* INIT */
+(function(){
+  g('f-agency').value='TripDekhoo';
+  g('f-atag').value='Discover the World with Us';
+  g('f-dest').value='Ladakh \u2014 Land of High Passes';
+  g('f-dur').value='7 Nights / 8 Days';
+  g('f-tagline').value='Experience the magic of the Himalayas';
+  g('f-chips').value='Pangong Lake, Nubra Valley, Khardung La';
+  g('f-price').value='\u20B9 24,999';
+  g('f-pper').value='per person (twin sharing)';
+  g('f-pnote').value='*Prices inclusive of GST';
+  g('f-phone').value='+91 98765 43210';
+  g('f-email').value='hello@tripdekhoo.com';
+  g('f-web').value='www.tripdekhoo.com';
+  g('f-cta1').value='Book Now';
+  g('f-cta2').value='Get Quote';
+  g('f-cancel').value='Free cancellation up to 30 days. 50% refund 15\u201330 days. No refund within 15 days.';
+  g('f-reschedule').value='Modification allowed up to 15 days prior with \u20B9500 admin fee.';
+  g('f-refund').value='Refunds processed within 7\u201310 business days via original payment mode.';
+  g('f-inc').value='Stay as per itinerary\nDaily breakfast & dinner\nAll transfers by AC vehicle\nInner Line Permits\nAll sightseeing included';
+  g('f-exc').value='Airfare / Train tickets\nPersonal expenses\nCamera & entry fees\nAdventure activity charges\nTravel insurance';
+  g('f-hnote').value='Similar basis / Subject to availability';
+  S.hls=[
+    {icon:'&#127956;',text:'Pangong Lake Sunrise'},
+    {icon:'&#128042;',text:'Nubra Valley Dunes'},
+    {icon:'&#11088;',text:'Stargazing at 14,000 ft'},
+    {icon:'&#128644;',text:'Khardung La Pass'},
+    {icon:'&#128247;',text:'Magnetic Hill'},
+    {icon:'&#127957;',text:'Camping by the Lake'}
+  ];
+  S.hls[0].icon='🏔️';S.hls[1].icon='🐪';S.hls[2].icon='⭐';S.hls[3].icon='🛤️';S.hls[4].icon='📸';S.hls[5].icon='🏕️';
+  renderHLForm();
+  S.itin=[
+    {title:'Arrive Leh \u2014 Acclimatization',desc:'Arrive at Leh Airport. Transfer to hotel. Relax and acclimatize. Evening visit to Leh Market.'},
+    {title:'Leh Sightseeing',desc:'Visit Shanti Stupa, Leh Palace, Hall of Fame Museum & local bazaar.'},
+    {title:'Leh \u2013 Nubra Valley',desc:'Drive via Khardung La (18,380 ft). Visit Diskit Monastery. Camel ride on Hunder sand dunes.'},
+    {title:'Nubra \u2013 Pangong Lake',desc:'Drive to the stunning Pangong Tso. Evening by the serene blue lake. Overnight in tents.'},
+    {title:'Pangong \u2013 Leh',desc:'Early morning photography at Pangong. Drive back to Leh via Chang La Pass.'}
+  ];
+  renderItinForm();
+  S.hotels=[
+    {city:'Leh',cat:'Deluxe',name:'The Grand Dragon / Hotel Shambhala',rooms:2,sharing:'Double'},
+    {city:'Nubra',cat:'Standard',name:'Desert Glamping Resort / Similar',rooms:2,sharing:'Double'},
+    {city:'Pangong',cat:'Standard',name:'Lake View Camps / Similar',rooms:2,sharing:'Double'}
+  ];
+  renderHotelForm();
+  S.reviews=[
+    {name:'Priya Sharma',trip:'Ladakh 2024',stars:5,text:'Absolutely breathtaking! Every detail was perfectly organized. A trip of a lifetime!',akey:null},
+    {name:'Rahul Mehta',trip:'Spiti Valley 2024',stars:5,text:'Professional service, amazing memories. TripDekhoo is now our go-to travel partner.',akey:null}
+  ];
+  renderReviewForm();
+  up();
+  setZoom(0.70,document.querySelectorAll('.zb')[1]);
+})();
+</script>
+</body>
+</html>
